@@ -14,7 +14,7 @@
       "binding": "DB",
       "database_name": "vrlss",
       // Paste the id printed by:  npx wrangler d1 create vrlss
-      "database_id": "PASTE_DATABASE_ID_HERE"
+      "database_id": "d7414110-b08d-4d47-91d1-e4f33aff302e"
     }
   ]
 }
