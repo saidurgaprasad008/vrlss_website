@@ -5,6 +5,9 @@
 //   npx wrangler secret put ADMIN_PASSWORD   -> the password for vrlss.in/admin
 //   npx wrangler secret put SESSION_SECRET   -> any long random text (signs the admin login cookie)
 
+import { posts as staticPosts } from '../src/site/blog/posts.js'
+
+const STATIC_SLUGS = new Set(staticPosts.map((p) => p.slug))
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
 const json = (data, status = 200, extra = {}) => new Response(JSON.stringify(data), { status, headers: { ...JSON_HEADERS, ...extra } })
 const bad = (msg, status = 400) => json({ error: msg }, status)
@@ -69,16 +72,20 @@ function sameOrigin(req) {
 const cookie = (value, maxAge) => `${COOKIE}=${value}; Path=/api; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`
 
 // ---------- handlers ----------
+// A post is public when it is published AND its publish time has come (posts can be scheduled ahead).
+const LIVE = "published = 1 AND publish_at <= ?1"
+
 async function listPosts(env, all) {
-  const q = all
-    ? 'SELECT id, slug, title, description, cover, published, created_at, updated_at FROM posts ORDER BY created_at DESC LIMIT 200'
-    : 'SELECT slug, title, description, cover, created_at FROM posts WHERE published = 1 ORDER BY created_at DESC LIMIT 100'
-  const { results } = await env.DB.prepare(q).all()
+  const { results } = all
+    ? await env.DB.prepare('SELECT id, slug, title, description, cover, published, publish_at, created_at, updated_at FROM posts ORDER BY publish_at DESC LIMIT 500').all()
+    : await env.DB.prepare(`SELECT slug, title, description, cover, publish_at FROM posts WHERE ${LIVE} ORDER BY publish_at DESC LIMIT 500`).bind(now()).all()
   return json({ posts: results })
 }
 
-async function getPost(env, slug, all) {
-  const row = await env.DB.prepare(`SELECT * FROM posts WHERE slug = ?1 ${all ? '' : 'AND published = 1'}`).bind(slug).first()
+const livePost = (env, slug) => env.DB.prepare(`SELECT * FROM posts WHERE slug = ?2 AND ${LIVE}`).bind(now(), slug).first()
+
+async function getPost(env, slug) {
+  const row = await livePost(env, slug)
   return row ? json({ post: row }) : bad('Not found', 404)
 }
 
@@ -87,7 +94,9 @@ function readPost(b) {
   if (title.length < 3) return [null, 'Please add a title.']
   const body = str(b.body, 50000)
   if (body.length < 20) return [null, 'The post is too short.']
-  return [{ title, slug: slugify(b.slug || title), description: str(b.description, 300), body, cover: safeUrl(b.cover), published: b.published === false ? 0 : 1 }]
+  const t = Date.parse(b.publish_at || '')
+  const publish_at = Number.isFinite(t) ? new Date(t).toISOString() : now()
+  return [{ title, slug: slugify(b.slug || title), description: str(b.description, 300), body, cover: safeUrl(b.cover), published: b.published === false ? 0 : 1, publish_at }]
 }
 
 async function savePost(req, env, id) {
@@ -95,11 +104,11 @@ async function savePost(req, env, id) {
   if (err) return bad(err)
   try {
     if (id) {
-      await env.DB.prepare('UPDATE posts SET slug=?1, title=?2, description=?3, body=?4, cover=?5, published=?6, updated_at=?7 WHERE id=?8')
-        .bind(p.slug, p.title, p.description, p.body, p.cover, p.published, now(), id).run()
+      await env.DB.prepare('UPDATE posts SET slug=?1, title=?2, description=?3, body=?4, cover=?5, published=?6, updated_at=?7, publish_at=?8 WHERE id=?9')
+        .bind(p.slug, p.title, p.description, p.body, p.cover, p.published, now(), p.publish_at, id).run()
     } else {
-      await env.DB.prepare('INSERT INTO posts (slug, title, description, body, cover, published, created_at, updated_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?7)')
-        .bind(p.slug, p.title, p.description, p.body, p.cover, p.published, now()).run()
+      await env.DB.prepare('INSERT INTO posts (slug, title, description, body, cover, published, created_at, updated_at, publish_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?7,?8)')
+        .bind(p.slug, p.title, p.description, p.body, p.cover, p.published, now(), p.publish_at).run()
     }
   } catch (e) {
     if (String(e).includes('UNIQUE')) return bad('Another post already uses this link (slug). Change the title or slug.')
@@ -157,7 +166,7 @@ async function api(req, env) {
 
   // public
   if (p === '/api/posts' && m === 'GET') return listPosts(env, false)
-  if (p.startsWith('/api/posts/') && m === 'GET') return getPost(env, decodeURIComponent(p.slice(11)), false)
+  if (p.startsWith('/api/posts/') && m === 'GET') return getPost(env, decodeURIComponent(p.slice(11)))
   if (p === '/api/testimonials' && m === 'GET') return listTestimonials(env, false)
   if (p === '/api/testimonials' && m === 'POST') return addTestimonial(req, env)
   if (p === '/api/admin/login' && m === 'POST') return login(req, env)
@@ -193,9 +202,141 @@ async function api(req, env) {
   return bad('Not found', 404)
 }
 
+// ---------- pages for posts from the database, readable by Google ----------
+// The site is prerendered, but posts written in /admin (or scheduled) are not part of that build.
+// For /blog/<slug> of a live database post, the worker takes the site's page and puts the post's
+// title, description, link preview tags and the article itself into the HTML before sending it.
+const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+function inlineHtml(t) {
+  return escHtml(t)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (all, label, href) => {
+      const h = href.replace(/&amp;/g, '&')
+      if (/^\/(?!\/)/.test(h)) return `<a href="${escHtml(h)}">${label}</a>`
+      if (/^https?:\/\//i.test(h)) return `<a href="${escHtml(h)}" rel="noopener nofollow">${label}</a>`
+      return label
+    })
+}
+export function mdToHtml(src) {
+  return String(src || '')
+    .trim()
+    .split(/\n\s*\n/)
+    .map((block) => {
+      const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
+      const out = []
+      let list = null
+      const flush = () => {
+        if (list) out.push(`<${list.tag}>${list.items.map((i) => `<li>${inlineHtml(i)}</li>`).join('')}</${list.tag}>`)
+        list = null
+      }
+      let para = []
+      const flushP = () => {
+        if (para.length) out.push(`<p>${inlineHtml(para.join(' '))}</p>`)
+        para = []
+      }
+      for (const l of lines) {
+        if (l.startsWith('### ')) { flushP(); flush(); out.push(`<h3>${inlineHtml(l.slice(4))}</h3>`) }
+        else if (l.startsWith('## ')) { flushP(); flush(); out.push(`<h2>${inlineHtml(l.slice(3))}</h2>`) }
+        else if (l.startsWith('- ')) { flushP(); if (list?.tag !== 'ul') { flush(); list = { tag: 'ul', items: [] } } list.items.push(l.slice(2)) }
+        else if (/^\d+\.\s/.test(l)) { flushP(); if (list?.tag !== 'ol') { flush(); list = { tag: 'ol', items: [] } } list.items.push(l.replace(/^\d+\.\s/, '')) }
+        else { flush(); para.push(l) }
+      }
+      flushP()
+      flush()
+      return out.join('')
+    })
+    .join('\n')
+}
+
+class SetAttr {
+  constructor(attr, value) { this.attr = attr; this.value = value }
+  element(el) { el.setAttribute(this.attr, this.value) }
+}
+class SetText {
+  constructor(text) { this.text = text }
+  element(el) { el.setInnerContent(this.text) }
+}
+class SetHtml {
+  constructor(html) { this.html = html }
+  element(el) { el.setInnerContent(this.html, { html: true }) }
+}
+class Remove { element(el) { el.remove() } }
+
+async function postPage(req, env, slug) {
+  const res = await env.ASSETS.fetch(new Request(new URL('/', req.url), req))
+  let post = null
+  try {
+    post = await livePost(env, slug)
+  } catch {
+    // database not ready: fall back to the normal page
+  }
+  if (!post) return res
+  const url = `${new URL(req.url).origin}/blog/${post.slug}`
+  const title = `${post.title} | VRLS Solutions`
+  const desc = post.description || post.title
+  const date = String(post.publish_at || post.created_at).slice(0, 10)
+  const ld = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: desc,
+    datePublished: post.publish_at || post.created_at,
+    dateModified: post.updated_at || post.publish_at,
+    mainEntityOfPage: url,
+    author: { '@type': 'Person', name: 'Sai Durga Prasad Velagaleti', url: 'https://vrlss.in/about' },
+    publisher: { '@type': 'Organization', name: 'VRLS Solutions', url: 'https://vrlss.in' },
+    ...(post.cover ? { image: post.cover } : {}),
+  }
+  const article = `<main class="nx-wrap bl-narrow" style="padding:120px 16px 60px"><nav><a href="/">Home</a> / <a href="/blog">Blog</a></nav><h1>${escHtml(post.title)}</h1><p>By Sai Durga Prasad Velagaleti · ${date}</p><article class="bl-prose">${mdToHtml(post.body)}</article></main>`
+  const out = new HTMLRewriter()
+    .on('title', new SetText(title))
+    .on('meta[name="description"]', new SetAttr('content', desc))
+    .on('link[rel="canonical"]', new SetAttr('href', url))
+    .on('meta[property="og:type"]', new SetAttr('content', 'article'))
+    .on('meta[property="og:title"]', new SetAttr('content', title))
+    .on('meta[property="og:description"]', new SetAttr('content', desc))
+    .on('meta[property="og:url"]', new SetAttr('content', url))
+    .on('meta[name="twitter:title"]', new SetAttr('content', title))
+    .on('meta[name="twitter:description"]', new SetAttr('content', desc))
+    .on('link[rel="alternate"][hreflang]', new Remove())
+    .on('script[type="application/ld+json"]', new SetHtml(JSON.stringify(ld).replace(/</g, '\\u003c')))
+    .on('#root', new SetHtml(article))
+    .transform(res)
+  const h = new Headers(out.headers)
+  h.set('cache-control', 'public, max-age=300')
+  return new Response(out.body, { status: 200, headers: h })
+}
+
+async function blogSitemap(req, env) {
+  const origin = new URL(req.url).origin
+  let rows = []
+  try {
+    rows = (await env.DB.prepare(`SELECT slug, publish_at, updated_at FROM posts WHERE ${LIVE} ORDER BY publish_at DESC LIMIT 5000`).bind(now()).all()).results
+  } catch {
+    // database not ready
+  }
+  const urls = rows
+    .map((r) => {
+      const mod = [r.publish_at, r.updated_at].filter(Boolean).sort().pop()
+      return `<url><loc>${origin}/blog/${escHtml(r.slug)}</loc><lastmod>${String(mod).slice(0, 10)}</lastmod></url>`
+    })
+    .join('')
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`, {
+    headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=1800' },
+  })
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url)
+    if (url.pathname === '/blog-sitemap.xml') return blogSitemap(req, env)
+    const bm = url.pathname.match(/^\/blog\/([a-z0-9-]{1,80})\/?$/)
+    if (bm && (req.method === 'GET' || req.method === 'HEAD')) {
+      // Articles that are part of the build (in src/site/blog/posts.js) are already prerendered files.
+      if (STATIC_SLUGS.has(bm[1])) return env.ASSETS.fetch(req)
+      return postPage(req, env, bm[1])
+    }
     if (url.pathname.startsWith('/api/')) {
       try {
         return await api(req, env)

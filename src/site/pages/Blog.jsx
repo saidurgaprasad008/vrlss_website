@@ -75,7 +75,7 @@ export function Blog() {
             <Link key={p.slug} to={`/blog/${p.slug}`} className="bl-card">
               {safeCover(p.cover) && <img src={safeCover(p.cover)} alt="" loading="lazy" width="1200" height="630" />}
               <div className="bl-card-body">
-                <span className="bl-meta">{fmtIso(p.created_at)}</span>
+                <span className="bl-meta">{fmtIso(p.publish_at || p.created_at)}</span>
                 <h2>{p.title}</h2>
                 <p>{p.description}</p>
                 <span className="bl-more">Read article →</span>
@@ -186,7 +186,7 @@ export function DbPost({ slug }) {
             <Link to="/">Home</Link> / <Link to="/blog">Blog</Link>
           </nav>
           <h1>{p.title}</h1>
-          <p className="bl-meta">By {brand.founder} · {fmtIso(p.created_at)} · {readMins(p.body)} min read</p>
+          <p className="bl-meta">By {brand.founder} · {fmtIso(p.publish_at || p.created_at)} · {readMins(p.body)} min read</p>
         </div>
       </section>
       <article className="nx-section bl-article">

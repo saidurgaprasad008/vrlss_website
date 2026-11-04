@@ -158,10 +158,13 @@ writeFileSync(
     'Allow: /',
     'Disallow: /preview/',
     'Disallow: /studio/',
+    'Disallow: /admin',
+    'Disallow: /api/',
     '',
     '# AI and answer-engine crawlers are welcome to read the public pages',
     ...['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'PerplexityBot', 'Google-Extended', 'Applebot-Extended', 'CCBot'].flatMap((b) => [`User-agent: ${b}`, 'Allow: /', '']),
     `Sitemap: ${SITE}/sitemap.xml`,
+    `Sitemap: ${SITE}/blog-sitemap.xml`,
     '',
   ].join('\n'),
 )

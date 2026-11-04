@@ -26,3 +26,13 @@ existing `vrlss-website` Worker. Run these in the project folder (`~/vrlss/...`)
 - vrlss.in/testimonials  anyone can post; it appears straight away
   (limits: 3 per person per day, no links, bot trap field)
 - vrlss.in/?cinema=full  still shows the old full 3D scroll scene, if you ever want it back
+
+## Scheduled posts (100 daily articles)
+Posts have a "Publish on" time. They stay hidden until then and appear automatically.
+
+One time, after pulling this update:
+   npx wrangler d1 execute vrlss --remote --file=worker/migrate-001-schedule.sql
+   npx wrangler d1 execute vrlss --remote --file=worker/seed-100-posts.sql
+
+The first post appears at 8:00 AM IST the day after you run the seed, then one every morning for 100 days.
+Edit, reschedule or unpublish any of them at vrlss.in/admin. Live posts are listed at vrlss.in/blog-sitemap.xml.

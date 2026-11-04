@@ -8,9 +8,11 @@ CREATE TABLE IF NOT EXISTS posts (
   body TEXT NOT NULL DEFAULT '',
   cover TEXT NOT NULL DEFAULT '',
   published INTEGER NOT NULL DEFAULT 1,
+  publish_at TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS p_live ON posts (published, publish_at);
 CREATE TABLE IF NOT EXISTS testimonials (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,

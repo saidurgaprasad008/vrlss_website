@@ -15,7 +15,14 @@ const api = async (path, opts = {}) => {
   return d
 }
 const fmt = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '')
-const EMPTY = { id: 0, title: '', slug: '', description: '', cover: '', body: '', published: true }
+const EMPTY = { id: 0, title: '', slug: '', description: '', cover: '', body: '', published: true, publish_at: '' }
+// <input type="datetime-local"> works in this device's local time (IST on your phone/laptop).
+const toLocalInput = (iso) => {
+  const d = iso ? new Date(iso) : new Date()
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
+const isFuture = (iso) => iso && Date.parse(iso) > Date.now()
 
 function Login({ onIn }) {
   const [pw, setPw] = useState('')
@@ -49,7 +56,7 @@ function Login({ onIn }) {
 }
 
 function PostEditor({ start, onDone }) {
-  const [p, setP] = useState(start)
+  const [p, setP] = useState({ ...start, publish_at: toLocalInput(start.publish_at) })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [preview, setPreview] = useState(false)
@@ -59,7 +66,7 @@ function PostEditor({ start, onDone }) {
     setBusy(true)
     setErr('')
     try {
-      await api(p.id ? `/api/admin/posts/${p.id}` : '/api/admin/posts', { method: p.id ? 'PUT' : 'POST', body: JSON.stringify(p) })
+      await api(p.id ? `/api/admin/posts/${p.id}` : '/api/admin/posts', { method: p.id ? 'PUT' : 'POST', body: JSON.stringify({ ...p, publish_at: new Date(p.publish_at).toISOString() }) })
       onDone(true)
     } catch (e2) {
       setErr(e2.message)
@@ -86,6 +93,7 @@ function PostEditor({ start, onDone }) {
           <textarea value={p.body} onChange={set('body')} rows={16} required />
         </label>
       )}
+      <label><span>Publish on (a future date and time schedules the post; it appears on the blog automatically then)</span><input type="datetime-local" value={p.publish_at} onChange={set('publish_at')} required /></label>
       <label className="ad-check"><input type="checkbox" checked={!!p.published} onChange={set('published')} /> <span>Published (untick to keep as a draft)</span></label>
       <div className="ad-actions">
         <button className="nx-btn nx-btn-primary" disabled={busy}><span>{busy ? 'Saving…' : 'Save post'}</span></button>
@@ -167,10 +175,10 @@ export default function Admin() {
                   <div className="ad-item" key={p.id}>
                     <div>
                       <strong>{p.title}</strong>
-                      <span>{p.published ? 'Published' : 'Draft'} · {fmt(p.created_at)}</span>
+                      <span>{!p.published ? 'Draft' : isFuture(p.publish_at) ? 'Scheduled' : 'Published'} · {fmt(p.publish_at || p.created_at)}</span>
                     </div>
                     <div className="ad-btns">
-                      {!!p.published && <Link to={`/blog/${p.slug}`}>View</Link>}
+                      {!!p.published && !isFuture(p.publish_at) && <Link to={`/blog/${p.slug}`}>View</Link>}
                       <button onClick={() => edit(p.id)}>Edit</button>
                       <button className="ad-danger" onClick={() => window.confirm(`Delete "${p.title}"?`) && act(() => api(`/api/admin/posts/${p.id}`, { method: 'DELETE' }))}>Delete</button>
                     </div>
