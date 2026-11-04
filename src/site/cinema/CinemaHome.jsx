@@ -18,8 +18,8 @@ import { getCaps, isCinematic } from './lib/caps'
 import { store, measure, update } from './lib/store'
 import { startSmoothScroll, gsap, ScrollTrigger } from './lib/smooth'
 import SplitReveal from './SplitReveal'
-import FallbackOrb from './FallbackOrb'
-import { hero, rotatingWords, glance, capabilities, process, work, industriesBlock, standards, engagement, faqBlock, finalCta } from './content'
+import HeroVisual from '../components/HeroVisual'
+import { hero, glance, capabilities, process, work, industriesBlock, standards, engagement, faqBlock, finalCta } from './content'
 import './cinema.css'
 import { onFirstInteraction } from '../wake'
 import { prefetch3D } from './lib/prefetch'
@@ -53,25 +53,19 @@ class WebGLBoundary extends Component {
   }
 }
 
-function RotatingWord() {
+// The original hero's rotating word: it changes in step with the laptop/phone mockup (HeroVisual).
+const heroWords = ['websites', 'online stores', 'booking apps', 'dashboards', 'client portals']
+function HeroWord() {
   const [i, setI] = useState(0)
   useEffect(() => {
-    if (document.documentElement.dataset.cmMotion !== 'on') return
-    // Start rotating on the visitor's first interaction: a word that keeps changing during
-    // page load makes Google measure a very late "Largest Contentful Paint".
-    let id
-    const cancel = onFirstInteraction(() => {
-      setI(1)
-      id = setInterval(() => setI((n) => (n + 1) % rotatingWords.length), 2600)
-    })
-    return () => (cancel(), clearInterval(id))
+    const on = (e) => setI(e.detail % heroWords.length)
+    window.addEventListener('vrlss:shown', on)
+    return () => window.removeEventListener('vrlss:shown', on)
   }, [])
   return (
-    <span className="st-rot cm-rot" aria-hidden="true">
-      {rotatingWords.map((w, k) => (
-        <span key={w} className={k === i ? 'on' : ''}>{w}</span>
-      ))}
-      <span className="st-rot-size">{rotatingWords[i]}</span>
+    <span className="st-rot" aria-hidden="true">
+      {heroWords.map((w, k) => <span key={w} className={k === i ? 'on' : ''}>{w}</span>)}
+      <span className="st-rot-size">{heroWords[i]}</span>
     </span>
   )
 }
@@ -318,39 +312,43 @@ export default function CinemaHome() {
         )}
 
       {/* ---------- 0 · Hero ---------- */}
-      <section className="cm-scene cm-hero" data-scene aria-labelledby="cm-h1">
-        <FallbackOrb />
-        <div className="nx-wrap cm-hero-inner">
-          <p className="st-badge cm-in" style={{ '--d': 0 }}>
-            <span className="st-dot" aria-hidden="true" />
-            {hero.badge} <b>·</b> {hero.badgeTail}
-          </p>
-          <h1 className="cm-h1" id="cm-h1" aria-label="We build websites, online stores and web apps that grow.">
-            <span className="cm-line cm-in" style={{ '--d': 1 }}>We build</span>
-            <span className="cm-line cm-in" style={{ '--d': 2 }}><RotatingWord /></span>
-            <span className="cm-line cm-in" style={{ '--d': 3 }}>that grow.</span>
-          </h1>
-          <p className="cm-lead cm-in" style={{ '--d': 5 }}>{hero.lead}</p>
-          <div className="cm-actions cm-in" style={{ '--d': 6 }}>
-            <Link to="/start" className="cm-btn cm-btn-primary">
-              <span>Start a project</span>
-              <IconArrow width={18} height={18} />
-            </Link>
-            <Link to="/work" className="cm-btn cm-btn-ghost">
-              <span>View our work</span>
-            </Link>
+      <section className="st-hero hm-hero cm-hero-classic" data-scene aria-labelledby="cm-h1">
+        <div className="nx-wrap st-hero-grid">
+          <div className="st-hero-copy">
+            <p className="st-badge">
+              <span className="st-dot" aria-hidden="true" />
+              {hero.badge} <b>·</b> {hero.badgeTail}
+            </p>
+            <h1 className="st-h1" id="cm-h1" aria-label="We build websites, online stores and web apps that grow.">
+              <span className="st-l1">We build</span>
+              <HeroWord />
+              <span className="st-l3">that grow.</span>
+            </h1>
+            <p className="st-lead">{hero.lead}</p>
+            <div className="st-actions">
+              <Link to="/start" className="nx-btn nx-btn-primary st-btn-xl">
+                <span>Start a project</span>
+                <IconArrow width={18} height={18} />
+              </Link>
+              <Link to="/work" className="nx-btn nx-btn-outline st-btn-xl">
+                <span>View our work</span>
+              </Link>
+            </div>
+            <ul className="st-promise">
+              {hero.promises.map((t, i) => {
+                const Ico = promiseIcons[i]
+                return (
+                  <li key={t}>
+                    <Ico width={18} height={18} />
+                    <span>{t}</span>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
-          <ul className="st-promise cm-promise cm-in" style={{ '--d': 7 }}>
-            {hero.promises.map((t, i) => {
-              const Ico = promiseIcons[i]
-              return (
-                <li key={t}>
-                  <Ico width={18} height={18} />
-                  <span>{t}</span>
-                </li>
-              )
-            })}
-          </ul>
+          <div className="st-hero-visual">
+            <HeroVisual />
+          </div>
         </div>
         <div className="st-markets cm-markets" aria-label="Where we work">
           <span className="st-markets-label">
