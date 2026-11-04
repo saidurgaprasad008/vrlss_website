@@ -186,7 +186,7 @@ export function LaunchOffer({ compact = false }) {
 
 // ---------- Research-driven building blocks ----------
 
-const Star = ({ on = true }) => (
+export const Star = ({ on = true }) => (
   <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" className={on ? 'st-on' : 'st-off'}>
     <path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z" fill="currentColor" />
   </svg>

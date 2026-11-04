@@ -108,6 +108,12 @@ html .cm-fallback-orb { display: block; position: absolute; right: -6vw; top: 46
 .cm-fallback-glow { position: absolute; inset: 15%; border-radius: 50%; background: radial-gradient(circle, rgba(217, 185, 140, 0.35), transparent 65%); filter: blur(30px); }
 html[data-cm-motion='on'] .cm-fallback-orb svg { animation: cm-spin 60s linear infinite; }
 @keyframes cm-spin { to { rotate: 360deg; } }
+/* Normal hero with a light 3D touch: the orb floats, and tilts toward the mouse (--px/--py set in CinemaHome). */
+html[data-cm='none'] .cm-fallback-orb { transform: perspective(1100px) rotateY(calc(var(--px, 0) * 18deg)) rotateX(calc(var(--py, 0) * 14deg)); transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+html[data-cm='none'] .cm-fallback-glow { transform: translate3d(calc(var(--px, 0) * -24px), calc(var(--py, 0) * 18px), -60px); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+html[data-cm='none'][data-cm-motion='on'] .cm-fallback-orb svg { animation: cm-spin 60s linear infinite, cm-float 6s ease-in-out infinite alternate; }
+@keyframes cm-float { from { translate: 0 10px; } to { translate: 0 -14px; } }
+html[data-cm='none'] .cm-hero { min-height: min(calc(100svh - var(--cm-head)), 860px); }
 
 @media (min-width: 1000px) {
   .cm-hero-inner > :is(.cm-lead, .st-badge) { max-width: 52%; }

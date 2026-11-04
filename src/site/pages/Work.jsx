@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { CtaBand } from '../components/Bits'
+import { CtaBand, CaseStudies } from '../components/Bits'
 import { Link } from '../router'
 import { demos } from '../demos/demoData'
 import { industries, sectors, sectorName, monogram } from '../demos/industries'
@@ -214,6 +214,7 @@ export default function Work() {
           </div>
         </div>
       </section>
+      <CaseStudies title="Live client projects" />
       <CtaBand title="Don’t see your industry?" lead="We will build a free demo for yours." />
     </>
   )

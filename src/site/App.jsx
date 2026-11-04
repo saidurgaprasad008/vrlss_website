@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Layout from './components/Layout'
 import { NavContext } from './router'
 import { CurrencyProvider } from './currency'
-import { routeFor, normalize, notFound, applyHead } from './routes'
+import { routeFor, normalize, notFound, applyHead, dynamicPostRoute } from './routes'
 import { useScrollFx } from './scrollfx'
 import { initAnalytics, trackPage } from './analytics'
 import { onFirstInteraction } from './wake'
@@ -17,7 +17,9 @@ import Contact from './pages/Contact'
 import Start from './pages/Start'
 import StudioDocs from './pages/StudioDocs'
 import SiteMap from './pages/SiteMap'
-import { Blog, BlogPost } from './pages/Blog'
+import { Blog, BlogPost, DbPost } from './pages/Blog'
+import Testimonials from './pages/Testimonials'
+import Admin from './pages/Admin'
 import { postByPath } from './blog/posts'
 import NotFound from './pages/NotFound'
 import Legal from './pages/Legal'
@@ -54,6 +56,8 @@ const pages = {
   '/studio/docs': StudioDocs,
   '/sitemap': SiteMap,
   '/blog': Blog,
+  '/testimonials': Testimonials,
+  '/admin': Admin,
   '/privacy': () => <Legal path="/privacy" />,
   '/terms': () => <Legal path="/terms" />,
   '/refunds': () => <Legal path="/refunds" />,
@@ -102,7 +106,7 @@ export default function SiteApp({ initialPath = '/' }) {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  const route = routeFor(path) || notFound
+  const route = useMemo(() => routeFor(path) || dynamicPostRoute(path) || notFound, [path])
   const site = industryByPath[route.path] || localizedByPath[route.path]
   const Page = pages[route.path] || NotFound
 
@@ -126,6 +130,7 @@ export default function SiteApp({ initialPath = '/' }) {
               ? <CityPage key={route.path} place={placeByPath[route.path]} />
               : <CountryPage key={route.path} place={placeByPath[route.path]} />)
             : postByPath[route.path] ? <BlogPost key={route.path} path={route.path} />
+            : route.dynamic ? <DbPost key={route.path} slug={route.slug} />
             : <Page key={route.path} />}
         </Layout>
         <ConsentBanner />

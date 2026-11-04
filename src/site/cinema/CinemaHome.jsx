@@ -163,9 +163,19 @@ export default function CinemaHome() {
     if (!caps) return
     const onScroll = () => update(window.scrollY)
     let glassEl = null
+    // Light 3D on the hero: the orb tilts gently toward the cursor (desktop mouse only, not with reduced motion).
+    const orb = caps.motion ? page.current?.querySelector('.cm-fallback-orb') : null
+    let raf = 0
     const onMove = (e) => {
       store.pointer.x = (e.clientX / window.innerWidth) * 2 - 1
       store.pointer.y = -((e.clientY / window.innerHeight) * 2 - 1)
+      if (orb && e.pointerType === 'mouse' && !raf) {
+        raf = requestAnimationFrame(() => {
+          raf = 0
+          orb.style.setProperty('--px', store.pointer.x.toFixed(3))
+          orb.style.setProperty('--py', store.pointer.y.toFixed(3))
+        })
+      }
       // Liquid glass: move the specular highlight and rim light with the cursor.
       if (e.pointerType !== 'mouse') return
       const el = e.target.closest?.(GLASS)
@@ -193,6 +203,7 @@ export default function CinemaHome() {
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('pointermove', onMove)
+      cancelAnimationFrame(raf)
       ScrollTrigger.removeEventListener('refresh', measure)
       ro.disconnect()
       clearTimeout(t)

@@ -1,7 +1,8 @@
 // Decides how rich the homepage can be. Only ever called in the browser (after hydration).
 //   full   desktop WebGL + post-processing · lite  phones: lighter scene
 //   static prefers-reduced-motion: one still render · none  no WebGL: CSS fallback
-// Override for testing with ?cinema=full|lite|static|none
+// The home page now uses the normal hero (none) by default: lighter and faster on every device.
+// The full 3D scroll scene is still here; open the site with ?cinema=full (or lite/static) to see it.
 export function hasWebGL() {
   try {
     const c = document.createElement('canvas')
@@ -14,9 +15,9 @@ export function hasWebGL() {
 export function getCaps() {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const mobile = window.matchMedia('(max-width: 768px), (pointer: coarse)').matches
-  let three = !hasWebGL() ? 'none' : reduced ? 'static' : mobile ? 'lite' : 'full'
+  let three = 'none'
   const forced = new URLSearchParams(window.location.search).get('cinema')
-  if (['full', 'lite', 'static', 'none'].includes(forced)) three = forced
+  if (['full', 'lite', 'static'].includes(forced)) three = !hasWebGL() ? 'none' : forced
   return { three, motion: !reduced && forced !== 'static', mobile }
 }
 

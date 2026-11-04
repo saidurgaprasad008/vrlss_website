@@ -1231,3 +1231,46 @@ html:has(.nx-sheet.is-open) main, html:has(.nx-sheet.is-open) .nx-footer { visib
 .nx-app .nx-wordmark-name i { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; color: #f6ead6; }
 .nx-app .nx-foot-brand .nx-wordmark-name { font-size: 1.22rem; }
 @media (max-width: 420px) { .nx-app .nx-wordmark-name { font-size: 1.14rem; } }
+
+/* testimonials + admin */
+.ts-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 28px; align-items: start; }
+@media (max-width: 900px) { .ts-layout { grid-template-columns: 1fr; } }
+.ts-list { display: grid; gap: 16px; }
+.ts-note { color: var(--ink-3); margin: 0; }
+.ts-form { display: grid; gap: 14px; padding: 24px; border-radius: 24px; background: var(--surface, #fff); border: 1px solid var(--line); box-shadow: var(--shadow); position: sticky; top: 96px; }
+.ts-form h2 { margin: 0; font-size: 1.3rem; }
+.ts-form label { display: grid; gap: 6px; font-size: 0.9rem; font-weight: 600; color: var(--ink-2); }
+.ts-form input, .ts-form textarea { font: inherit; font-weight: 400; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; min-height: 44px; width: 100%; box-sizing: border-box; }
+.ts-form textarea { resize: vertical; line-height: 1.5; }
+.ts-form input:focus, .ts-form textarea:focus { outline: 2px solid var(--rose); outline-offset: 1px; }
+.ts-form small { justify-self: end; font-weight: 400; color: var(--ink-3); }
+.ts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ts-rate { display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; font-weight: 600; color: var(--ink-2); }
+.ts-pick button { background: none; border: 0; padding: 4px; cursor: pointer; color: inherit; }
+.ts-pick svg { width: 26px; height: 26px; }
+.ts-hp { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.ts-ok { margin: 0; color: #1d7a4a; font-weight: 600; }
+.ts-err { margin: 0; color: #b3261e; font-weight: 600; }
+.ts-fine { margin: 0; font-size: 0.8rem; color: var(--ink-3); }
+.ts-form .nx-btn[disabled] { opacity: 0.6; }
+
+.ad-sec { padding-top: 120px; }
+.ad-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.ad-login, .ad-editor { position: static; max-width: 760px; }
+.ad-login { max-width: 420px; }
+.ad-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.ad-tabs button { font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface, #fff); color: var(--ink-2); cursor: pointer; min-height: 40px; }
+.ad-tabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.ad-list { display: grid; gap: 10px; justify-items: start; }
+.ad-item { width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 16px 18px; border-radius: 16px; background: var(--surface, #fff); border: 1px solid var(--line); }
+.ad-item > div:first-child { display: grid; gap: 4px; min-width: 0; flex: 1 1 260px; }
+.ad-item span { font-size: 0.85rem; color: var(--ink-3); }
+.ad-item p { margin: 4px 0 0; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ad-item.is-off { opacity: 0.6; }
+.ad-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ad-btns button, .ad-btns a { font: inherit; font-size: 0.9rem; font-weight: 600; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; text-decoration: none; min-height: 38px; display: inline-flex; align-items: center; }
+.ad-btns .ad-danger { color: #b3261e; border-color: color-mix(in srgb, #b3261e 35%, transparent); }
+.ad-check { display: flex !important; align-items: center; gap: 8px; }
+.ad-check input { width: auto; min-height: 0; }
+.ad-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.ad-preview { padding: 16px; border: 1px dashed var(--line); border-radius: 12px; min-height: 200px; }

@@ -70,7 +70,18 @@ export const reviewLink = '' // your Google "write a review" link, from Google B
 
 // REAL case studies only. Sections stay hidden until there is at least one.
 // { business: 'Sri Sai Tiffins', city: 'Vijayawada', industry: 'Restaurant', img: 'restaurant', result: '3x more WhatsApp orders in 6 weeks', did: ['8-page website', 'Google Business Profile', 'WhatsApp ordering'], quote: '', url: '' },
-export const caseStudies = []
+export const caseStudies = [
+  {
+    business: 'Inviname Arts',
+    city: 'Andhra Pradesh',
+    industry: 'Handmade resin art shop',
+    img: 'inviname',
+    result: 'Live online shop with its own Android app',
+    did: ['Online store with cart, UPI checkout and order tracking', 'Admin panel for products, orders and payments, with a team invite system', 'Distance-based free delivery and pincode lookup', 'Installable app, published to Google Play'],
+    quote: '',
+    url: 'https://inviname.in',
+  },
+]
 
 // What every website project includes (shown on Home, Pricing and city pages).
 export const included = [

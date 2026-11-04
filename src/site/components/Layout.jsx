@@ -16,6 +16,7 @@ const nav = [
   { to: '/pricing', label: 'Pricing' },
   { to: '/about', label: 'Studio' },
   { to: '/blog', label: 'Blog' },
+  { to: '/testimonials', label: 'Testimonials' },
 ]
 
 export default function Layout({ path, children }) {
@@ -139,6 +140,7 @@ export default function Layout({ path, children }) {
             <Link to="/work">Work</Link>
             <Link to="/pricing">Pricing</Link>
             <Link to="/blog">Blog</Link>
+            <Link to="/testimonials">Testimonials</Link>
             <Link to="/contact">Contact</Link>
             {Object.entries(brand.social).filter(([, u]) => u).map(([k, u]) => (
               <a key={k} href={u} target="_blank" rel="noopener noreferrer">{k.charAt(0).toUpperCase() + k.slice(1)}</a>

@@ -198,6 +198,20 @@ const baseRoutes = [
     noindex: true,
   },
   {
+    path: '/testimonials',
+    title: `Testimonials: What Clients Say | ${brand.name}`,
+    description: `Read what clients say about working with ${brand.name}, and share your own experience. Every testimonial is written by the person who posted it.`,
+    h1: 'Testimonials',
+    crumb: 'Testimonials',
+  },
+  {
+    path: '/admin',
+    title: `Admin | ${brand.name}`,
+    description: 'Site admin.',
+    h1: 'Admin',
+    noindex: true,
+  },
+  {
     path: '/sitemap',
     title: `Site Map: All Pages and Demos | ${brand.name}`,
     description: `Every page on ${brand.name}: services, pricing, 46 industry website demos, demos in 7 languages, the countries and cities we serve, and our policies.`,
@@ -375,6 +389,12 @@ export const normalize = (p = '/') => {
 
 export const routeFor = (p) => routes.find((r) => r.path === normalize(p)) || null
 export const isSiteRoute = (p) => !!routeFor(p)
+// Blog posts written from /admin live in the database, not in the code. Their pages are drawn in the browser.
+export const dynamicPostRoute = (p) => {
+  const n = normalize(p)
+  const m = n.match(/^\/blog\/([a-z0-9-]{1,80})$/)
+  return m && !routeFor(n) ? { path: n, slug: m[1], dynamic: true, title: `Blog | ${brand.name}`, description: 'An article from the VRLS Solutions blog.', h1: 'Blog', parent: { path: '/blog', name: 'Blog' } } : null
+}
 
 const abs = (p) => `${SITE}${p === '/' ? '/' : p}`
 export const canonical = (r) => abs(r.path)
