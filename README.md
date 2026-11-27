@@ -1,32 +1,66 @@
-# React + Vite
+# VRLS Solutions Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Live site: https://vrlss.in
 
-Currently, two official plugins are available:
+A React website for VRLS Solutions. The repository contains the main studio site, industry-specific website previews, product-style demos, blog and testimonial pages, and a Cloudflare Worker API.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Screenshot
 
-## React Compiler
+<!-- Add screenshot here: cinematic homepage -->
+<!-- Add screenshot here: work and demo pages -->
+<!-- Add screenshot here: mobile view -->
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech used
 
-## Expanding the ESLint configuration
+- React 19 and JavaScript
+- Vite for development and client builds
+- Three.js, React Three Fiber, Drei and postprocessing for 3D scenes
+- GSAP and ScrollTrigger for scroll-linked motion
+- Lenis for smooth scrolling
+- Lucide React for icons
+- Cloudflare Workers, Pages assets and D1 database integration
+- ESLint
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Main features
 
+- Cinematic homepage with a responsive 3D experience and fallback modes
+- Studio pages for websites, digital marketing, pricing, work, about and contact
+- Industry website previews and interactive product demos
+- Localized demo content and market/location pages
+- Blog, testimonials and an admin interface
+- Currency display and client enquiry flows
+- Worker-backed API routes for blog and testimonial data
+- Prerendering script that generates route HTML, sitemap and robots file
 
-Restaurant demo structure: menu-first experience, secondary reservation CTA, and expandable full menu.
+## Run locally
 
-Boutique demo: /demos/boutique — fictional Aurelia Fashion Studio catalogue concept with collection filters, product detail modal, lookbook and enquiry flow.
+Requires Node.js and npm.
 
-## Cinematic home page
+1. Clone this repository.
+2. Install dependencies:
 
-The home page (`/`) is a scroll-driven 3D experience built with three.js (@react-three/fiber), GSAP ScrollTrigger and Lenis. Everything lives in `src/site/cinema/`:
+   ```bash
+   npm install
+   ```
 
-- `content.js`: homepage copy. Brand details, prices, demos, sectors, markets and FAQs still come from the existing data files (`brand.js`, `prices.js`, `demos/industries.js`, `places.js`, `routes.js`).
-- `palette.js`: the studio colours used by the 3D scene (same values as `studio.css`).
-- `CinemaHome.jsx` + `cinema.css`: the page and its styles (scoped to `.cm`).
-- `three/`: the 3D scenes. `world.js` holds the camera path and where each scene sits.
+3. Start the Vite development server:
 
-It adapts to the device: full 3D with bloom and depth of field on desktop, a lighter scene on phones, a single still frame for "reduce motion", and an SVG fallback without WebGL. Add `?cinema=full|lite|static|none` to the URL to preview each version. The 3D code is a separate chunk, loaded after the page is interactive. The prerendered HTML still contains all the text for search engines.
+   ```bash
+   npm run dev
+   ```
+
+4. Open the local URL printed by Vite.
+
+Useful scripts:
+
+- `npm run lint` — run ESLint.
+- `npm run build` — build the client, server-rendered entry and prerendered pages.
+- `npm run preview` — preview the Vite build.
+
+Cloudflare Worker and D1-backed features may require the corresponding local or deployed Cloudflare bindings to behave as they do in production.
+
+## What I learned
+
+This project gave me practice combining React components, routing, responsive interfaces, 3D rendering, scroll animation, prerendering and a Worker-backed data layer in one website.
+
+I use AI-assisted development to help draft and implement code. I review, test and fix the code myself.
